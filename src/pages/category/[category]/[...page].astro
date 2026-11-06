@@ -1,0 +1,166 @@
+---
+import { getCollection } from "astro:content";
+import type { GetStaticPaths, Page } from "astro";
+import NewsletterSignup from "@/components/NewsletterSignup.astro";
+import OptimizedImage from "@/components/OptimizedImage.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { categoryMeta } from "@/config/categories";
+import {
+  categories,
+  categoryFromSlug,
+  categorySlug,
+  formatDate,
+  getByCategory,
+  postHref,
+  visiblePosts,
+  type Category,
+  type Post,
+} from "@/lib/posts";
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const allPosts = visiblePosts(await getCollection("posts"));
+  return categories.flatMap((category) =>
+    paginate(getByCategory(allPosts, category), {
+      pageSize: 4,
+      params: { category: categorySlug(category) },
+      props: { category, allPosts },
+    }),
+  );
+}) satisfies GetStaticPaths;
+
+interface Props {
+  category: Category;
+  allPosts: Post[];
+  page: Page<Post>;
+}
+
+const { category, allPosts, page } = Astro.props;
+const cat = categoryFromSlug(Astro.params.category ?? "") ?? category;
+const allCategoryPosts = getByCategory(allPosts, cat);
+const elsewhere = allPosts.filter((post) => post.data.category !== cat).slice(0, 4);
+const meta = categoryMeta[cat];
+const title = page.currentPage === 1 ? cat : `${cat} - Page ${page.currentPage}`;
+const prevUrl =
+  page.url.prev && (page.url.prev.endsWith("/") ? page.url.prev : `${page.url.prev}/`);
+const nextUrl =
+  page.url.next && (page.url.next.endsWith("/") ? page.url.next : `${page.url.next}/`);
+---
+
+<BaseLayout title={title} description={meta.description} prevUrl={prevUrl} nextUrl={nextUrl}>
+  <SiteHeader posts={allPosts} variant="transparent" />
+  <main id="content">
+    <header class="bg-primary text-primary-foreground">
+      <div class="section-shell pb-12 pt-24 sm:pb-16 sm:pt-28">
+        <h1 class="font-display text-[clamp(2.8rem,6vw,4.75rem)] font-semibold leading-none">
+          {cat}
+        </h1>
+        <p class="mt-4 max-w-2xl text-[1.08rem] leading-7 text-primary-foreground/72">
+          {meta.description}
+        </p>
+        <p class="mt-6 font-mono text-xs text-primary-foreground/48">
+          {allCategoryPosts.length}
+          {allCategoryPosts.length === 1 ? "story" : "stories"} / page {page.currentPage} of {
+            page.lastPage
+          }
+        </p>
+      </div>
+    </header>
+
+    <section class="section-shell py-12 sm:py-16" aria-label={`${cat} reporting`}>
+      <div class="grid gap-x-9 gap-y-12 md:grid-cols-2">
+        {
+          page.data.map((post, index) => (
+            <article class="group">
+              <a href={postHref(post)} class="image-frame block aspect-[3/2]">
+                <OptimizedImage
+                  image={post.data.image}
+                  profile="card"
+                  loading={index < 2 ? "eager" : "lazy"}
+                  priority={index === 0}
+                />
+              </a>
+              <p class="label-line mt-4 text-accent">{post.data.articleType}</p>
+              <h2 class="mt-2 font-display text-[clamp(1.55rem,2.5vw,2.2rem)] font-semibold leading-[1.1] text-balance">
+                <a href={postHref(post)} class="headline-accent">
+                  {post.data.title}
+                </a>
+              </h2>
+              <p class="mt-3 text-pretty leading-7 text-muted-foreground">
+                {post.data.description}
+              </p>
+              <p class="label-line mt-4">
+                {post.data.author.name} /{" "}
+                <time datetime={post.data.date.toISOString()}>
+                  {formatDate(post.data.date, "long")}
+                </time>{" "}
+                / {post.data.readingTime} min
+              </p>
+            </article>
+          ))
+        }
+      </div>
+
+      <nav
+        class="mt-12 flex items-center justify-between gap-4 font-mono text-sm text-muted-foreground"
+        aria-label={`${cat} pagination`}
+      >
+        {
+          page.url.prev ? (
+            <a href={prevUrl} class="story-link">
+              Previous
+            </a>
+          ) : (
+            <span aria-hidden="true" />
+          )
+        }
+        <span>{page.currentPage} / {page.lastPage}</span>
+        {
+          page.url.next ? (
+            <a href={nextUrl} class="story-link">
+              Next
+            </a>
+          ) : (
+            <span aria-hidden="true" />
+          )
+        }
+      </nav>
+    </section>
+
+    <section class="bg-surface" aria-labelledby="elsewhere-heading">
+      <div class="section-shell py-[var(--space-section)]">
+        <h2 id="elsewhere-heading" class="section-title">Selected from other desks</h2>
+        <div class="mt-7 grid gap-9 sm:grid-cols-2 lg:grid-cols-4">
+          {
+            elsewhere.map((post) => (
+              <article class="group">
+                <a href={postHref(post)} class="image-frame block aspect-[3/2]">
+                  <OptimizedImage image={post.data.image} profile="card" />
+                </a>
+                <p class="label-line mt-3 text-accent">
+                  {post.data.category} / {post.data.articleType}
+                </p>
+                <h3 class="mt-1.5 font-display text-[1.4rem] font-semibold leading-[1.15] text-balance">
+                  <a href={postHref(post)} class="headline-accent">
+                    {post.data.title}
+                  </a>
+                </h3>
+                <p class="mt-2 text-pretty text-[0.95rem] leading-6 text-muted-foreground">
+                  {post.data.description}
+                </p>
+                <p class="label-line mt-3">
+                  {post.data.author.name} / {formatDate(post.data.date)} / {post.data.readingTime}{" "}
+                  min
+                </p>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <NewsletterSignup />
+  </main>
+  <SiteFooter />
+</BaseLayout>

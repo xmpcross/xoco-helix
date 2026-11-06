@@ -1,0 +1,51 @@
+---
+import { getCollection } from "astro:content";
+import NewsletterSignup from "@/components/NewsletterSignup.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { formatDate, postHref, visiblePosts } from "@/lib/posts";
+
+const allPosts = visiblePosts(await getCollection("posts"));
+const updates = allPosts.slice(0, 10);
+---
+
+<BaseLayout title="Editorial Log" description="Recent publishing notes and updates from Helix.">
+  <SiteHeader posts={allPosts} />
+  <main id="content" class="min-h-screen">
+    <section class="section-shell page-header">
+      <p class="page-kicker">Editorial log</p>
+      <h1 class="page-title">Recently published</h1>
+      <p class="page-intro">A simple publication ledger for readers who prefer chronology.</p>
+    </section>
+    <section class="section-shell pb-[var(--space-section)]">
+      <ol class="grid gap-5">
+        {
+          updates.map((post) => (
+            <li class="grid gap-3 bg-surface p-5 md:grid-cols-[8rem_minmax(0,1fr)]">
+              <time
+                class="font-mono text-sm text-muted-foreground"
+                datetime={post.data.date.toISOString()}
+              >
+                {formatDate(post.data.date)}
+              </time>
+              <div>
+                <>
+                  <a
+                    href={postHref(post)}
+                    class="font-display text-2xl font-semibold headline-accent"
+                  >
+                    {post.data.title}
+                  </a>
+                  <p class="mt-2 text-muted-foreground">{post.data.description}</p>
+                </>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+    <NewsletterSignup />
+  </main>
+  <SiteFooter />
+</BaseLayout>

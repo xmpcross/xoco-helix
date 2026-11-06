@@ -1,0 +1,148 @@
+---
+import { getCollection } from "astro:content";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { siteConfig } from "@/config/site";
+import { visiblePosts } from "@/lib/posts";
+
+const allPosts = visiblePosts(await getCollection("posts"));
+const contact = siteConfig.contact;
+const contactStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  name: `Contact ${siteConfig.name}`,
+  url: new URL("/contact/", siteConfig.siteUrl).toString(),
+  mainEntity: {
+    "@type": "Organization",
+    name: siteConfig.authorName,
+    email: siteConfig.email,
+  },
+};
+---
+
+<BaseLayout
+  title="Contact"
+  description={`Contact ${siteConfig.name} for editorial notes, corrections, and partnership inquiries.`}
+  structuredData={contactStructuredData}
+>
+  <SiteHeader posts={allPosts} />
+  <main id="content" class="min-h-screen">
+    <section class="section-shell page-header pb-10">
+      <p class="page-kicker">Contact</p>
+      <h1 class="page-title">Reach the editorial desk.</h1>
+      <p class="page-intro">
+        For corrections, tips, rights questions, and editorial inquiries, send a note to the desk.
+      </p>
+    </section>
+
+    <section class="section-shell pb-[var(--space-section)]">
+      <div class="grid gap-12 py-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
+        <form
+          class="grid gap-5"
+          action={contact.enabled && contact.action ? contact.action : "#"}
+          method={contact.method}
+          aria-describedby="contact-note"
+        >
+          <div class="grid gap-2">
+            <label class="font-display font-semibold" for="contact-name">Name</label>
+            <input
+              id="contact-name"
+              class="contact-field"
+              name="name"
+              type="text"
+              autocomplete="name"
+              required
+            />
+          </div>
+          <div class="grid gap-2">
+            <label class="font-display font-semibold" for="contact-email">Email</label>
+            <input
+              id="contact-email"
+              class="contact-field"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+            />
+          </div>
+          <div class="grid gap-2">
+            <label class="font-display font-semibold" for="contact-topic">Topic</label>
+            <select id="contact-topic" class="contact-field" name="topic" required>
+              <option value="">Choose a topic</option>
+              <option>Correction</option>
+              <option>Editorial tip</option>
+              <option>Rights and permissions</option>
+              <option>Partnership</option>
+            </select>
+          </div>
+          <div class="grid gap-2">
+            <label class="font-display font-semibold" for="contact-message">Message</label>
+            <textarea id="contact-message" class="contact-field min-h-44" name="message" required
+            ></textarea>
+          </div>
+          <div class="flex flex-wrap items-center gap-4">
+            <button
+              type="submit"
+              class="bg-primary px-5 py-3 font-display font-semibold text-primary-foreground"
+              >Send</button
+            >
+            <p id="contact-note" class="text-sm text-muted-foreground">
+              Sample form. Add an endpoint in site config.
+            </p>
+          </div>
+        </form>
+
+        <aside aria-labelledby="contact-desk-heading">
+          <h2 id="contact-desk-heading" class="section-title">Editorial desk</h2>
+          <dl class="mt-8 grid gap-6 text-sm">
+            <div>
+              <dt class="font-mono text-xs uppercase text-muted-foreground">Email</dt>
+              <dd class="mt-2 font-display text-2xl font-semibold">
+                <a href={`mailto:${siteConfig.email}`} class="story-link text-accent"
+                  >{siteConfig.email}</a
+                >
+              </dd>
+            </div>
+            <div>
+              <dt class="font-mono text-xs uppercase text-muted-foreground">Response</dt>
+              <dd class="mt-2 text-muted-foreground">{contact.responseTime}</dd>
+            </div>
+            <div>
+              <dt class="font-mono text-xs uppercase text-muted-foreground">Location</dt>
+              <dd class="mt-2 text-muted-foreground">{contact.office.join(", ")}</dd>
+            </div>
+          </dl>
+
+          <dl class="mt-10 grid gap-4 border-t border-border pt-6">
+            <div>
+              <dt class="font-mono text-xs uppercase text-muted-foreground">Corrections</dt>
+              <dd class="mt-1 text-sm text-muted-foreground">Story title, passage, and source.</dd>
+            </div>
+            <div>
+              <dt class="font-mono text-xs uppercase text-muted-foreground">Tips</dt>
+              <dd class="mt-1 text-sm text-muted-foreground">
+                Papers, data releases, or field notes.
+              </dd>
+            </div>
+            <div>
+              <dt class="font-mono text-xs uppercase text-muted-foreground">Rights</dt>
+              <dd class="mt-1 text-sm text-muted-foreground">Material, use, and timing.</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <SiteFooter />
+  <style>
+    .contact-field {
+      min-height: 3rem;
+      border: 1px solid var(--border);
+      background: var(--background);
+      color: var(--foreground);
+      padding: 0.75rem 0.875rem;
+      font: inherit;
+    }
+  </style>
+</BaseLayout>

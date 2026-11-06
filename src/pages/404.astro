@@ -1,0 +1,32 @@
+---
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+import { visiblePosts } from "@/lib/posts";
+
+const allPosts = visiblePosts(await getCollection("posts"));
+---
+
+<BaseLayout title="Page not found" description="The page you requested could not be found." noindex>
+  <SiteHeader posts={allPosts} />
+  <main id="content" class="grid min-h-[65vh] place-items-center px-5">
+    <div class="max-w-2xl text-center">
+      <p class="label-line">404 / Lost Signal</p>
+      <h1
+        class="mt-4 font-display text-[clamp(2.65rem,5.4vw,4.75rem)] font-semibold leading-[1.02]"
+      >
+        This observation is outside the archive.
+      </h1>
+      <p class="mt-5 text-lg leading-8 text-muted-foreground">
+        The story may have moved, or the address may be mistyped.
+      </p>
+      <a
+        href="/"
+        class="mt-8 inline-flex bg-accent px-5 py-3 font-display font-semibold text-accent-foreground"
+        >Return to Helix</a
+      >
+    </div>
+  </main>
+  <SiteFooter />
+</BaseLayout>

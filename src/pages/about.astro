@@ -1,0 +1,72 @@
+---
+import { getCollection } from "astro:content";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { siteConfig } from "@/config/site";
+import { categories, categorySlug, visiblePosts } from "@/lib/posts";
+import { categoryMeta } from "@/config/categories";
+
+const allPosts = visiblePosts(await getCollection("posts"));
+---
+
+<BaseLayout
+  title="About"
+  description={`Learn about ${siteConfig.name}, an independent science publication.`}
+>
+  <SiteHeader posts={allPosts} />
+  <main id="content" class="min-h-screen">
+    <section class="section-shell page-header pb-10">
+      <p class="page-kicker">About the publication</p>
+      <h1 class="page-title">Science reporting with the uncertainty left in.</h1>
+      <p class="page-intro">
+        {siteConfig.name} covers discovery as a process: observation, method, debate, replication, and
+        the human work of finding out what is true.
+      </p>
+    </section>
+
+    <section class="section-shell pb-[var(--space-section)]">
+      <div class="border-y border-border py-10">
+        <h2 class="section-title">What we are for</h2>
+        <div class="mt-6 max-w-3xl text-[1.05rem] leading-8 text-ink-soft">
+          <p>
+            Helix is built for readers who want science journalism to move at the speed of evidence,
+            not spectacle.
+          </p>
+          <p class="mt-5">
+            We explain new findings, field methods, instrumentation, and open questions in plain
+            language without sanding away the caveats that make research trustworthy.
+          </p>
+          <p class="mt-5">
+            A result can be exciting and still provisional. A measurement can be beautiful and still
+            limited. The work is to help readers see both at once.
+          </p>
+        </div>
+      </div>
+
+      <section class="py-12" aria-labelledby="about-coverage-heading">
+        <h2 id="about-coverage-heading" class="section-title">Six desks, one standard</h2>
+        <ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {
+            categories.map((category) => (
+              <li>
+                <a
+                  href={`/category/${categorySlug(category)}/`}
+                  class="group block h-full bg-surface p-5 transition-colors hover:bg-muted focus-visible:bg-muted"
+                >
+                  <span class="font-display text-xl font-semibold transition-colors group-hover:text-accent">
+                    {category}
+                  </span>
+                  <span class="mt-2 block text-sm leading-6 text-muted-foreground">
+                    {categoryMeta[category].description}
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+    </section>
+  </main>
+  <SiteFooter />
+</BaseLayout>

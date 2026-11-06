@@ -1,0 +1,135 @@
+---
+import { getCollection } from "astro:content";
+import OptimizedImage from "@/components/OptimizedImage.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { navigation, siteConfig } from "@/config/site";
+import { formatDate, postHref, visiblePosts, type Post } from "@/lib/posts";
+import type { GetStaticPaths, Page } from "astro";
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const posts = visiblePosts(await getCollection("posts"));
+  return paginate(posts, { pageSize: 12 });
+}) satisfies GetStaticPaths;
+
+interface Props {
+  page: Page<Post>;
+}
+
+const { page } = Astro.props;
+const allPosts = visiblePosts(await getCollection("posts"));
+const title = page.currentPage === 1 ? "Archive" : `Archive - Page ${page.currentPage}`;
+const description = `Browse every ${siteConfig.name} science story, explainer, field report, and visual investigation.`;
+const prevUrl =
+  page.url.prev && (page.url.prev.endsWith("/") ? page.url.prev : `${page.url.prev}/`);
+const nextUrl =
+  page.url.next && (page.url.next.endsWith("/") ? page.url.next : `${page.url.next}/`);
+---
+
+<BaseLayout title={title} description={description} prevUrl={prevUrl} nextUrl={nextUrl}>
+  <SiteHeader posts={allPosts} />
+  <main id="content">
+    <header class="section-shell page-header">
+      <p class="page-kicker">Complete archive</p>
+      <h1 class="page-title">All stories</h1>
+      <p class="page-intro">
+        A chronological index of {page.total} reports, explainers, interviews, and field notes from the
+        Helix desks.
+      </p>
+      <nav
+        class="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"
+        aria-label="Browse archive by subject"
+      >
+        {
+          navigation.map((item) => (
+            <a href={item.href} class="story-link">
+              {item.label}
+            </a>
+          ))
+        }
+      </nav>
+    </header>
+
+    <section class="bg-surface" aria-labelledby="archive-list-heading">
+      <div class="section-shell py-10 sm:py-14">
+        <div class="flex items-baseline justify-between gap-4">
+          <h2 id="archive-list-heading" class="section-title text-[1.5rem]">Chronology</h2>
+          <span class="label-line">Page {page.currentPage} / {page.lastPage}</span>
+        </div>
+
+        <ol class="mt-5 grid gap-2">
+          {
+            page.data.map((post, index) => (
+              <li>
+                <article class="group grid gap-3 py-5 sm:grid-cols-[6.5rem_minmax(0,1fr)_8.5rem] sm:items-center sm:gap-6">
+                  <div class="label-line">
+                    <span class="block text-accent">
+                      {String((page.currentPage - 1) * page.size + index + 1).padStart(2, "0")}
+                    </span>
+                    <time datetime={post.data.date.toISOString()}>
+                      {formatDate(post.data.date)}
+                    </time>
+                    <span class="block">{post.data.category}</span>
+                  </div>
+                  <div>
+                    <h3 class="font-display text-[1.35rem] font-semibold leading-tight">
+                      <a href={postHref(post)} class="headline-accent">
+                        {post.data.title}
+                      </a>
+                    </h3>
+                    <p class="mt-1.5 max-w-3xl text-sm leading-6 text-muted-foreground">
+                      {post.data.description}
+                    </p>
+                    <p class="label-line mt-2">
+                      {post.data.articleType} / {post.data.readingTime} min
+                    </p>
+                  </div>
+                  <a
+                    href={postHref(post)}
+                    class="image-frame hidden aspect-[4/3] sm:block"
+                    tabindex="-1"
+                    aria-hidden="true"
+                  >
+                    <OptimizedImage
+                      image={post.data.image}
+                      profile="compact"
+                      alt=""
+                      loading={index < 3 ? "eager" : "lazy"}
+                    />
+                  </a>
+                </article>
+              </li>
+            ))
+          }
+        </ol>
+
+        <nav
+          class="mt-10 flex items-center justify-between gap-4 font-mono text-sm text-muted-foreground"
+          aria-label="All stories pagination"
+        >
+          {
+            page.url.prev ? (
+              <a href={page.url.prev} class="story-link">
+                Previous
+              </a>
+            ) : (
+              <span aria-hidden="true" />
+            )
+          }
+          <span>{page.currentPage} / {page.lastPage}</span>
+          {
+            page.url.next ? (
+              <a href={page.url.next} class="story-link">
+                Next
+              </a>
+            ) : (
+              <span aria-hidden="true" />
+            )
+          }
+        </nav>
+      </div>
+    </section>
+  </main>
+  <SiteFooter />
+</BaseLayout>

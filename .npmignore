@@ -1,0 +1,16 @@
+.astro/
+.git/
+.github/
+.openai/
+dist/
+node_modules/
+test-results/
+
+.dev.vars
+.env
+.env.*
+*.local
+*.log
+
+AGENTS.md
+RELEASE_CHECKLIST.md

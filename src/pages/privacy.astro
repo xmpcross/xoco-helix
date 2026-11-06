@@ -1,0 +1,68 @@
+---
+import { getCollection } from "astro:content";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { siteConfig } from "@/config/site";
+import { visiblePosts } from "@/lib/posts";
+
+const allPosts = visiblePosts(await getCollection("posts"));
+---
+
+<BaseLayout title="Privacy Policy" description={`Privacy policy for ${siteConfig.name}.`}>
+  <SiteHeader posts={allPosts} />
+  <main id="content" class="min-h-screen">
+    <section class="mx-auto max-w-4xl page-header px-6 lg:px-10">
+      <p class="page-kicker">Privacy</p>
+      <h1 class="page-title">Privacy policy</h1>
+      <p class="page-intro">
+        This page explains the types of information a publication may collect, how that information
+        can be used, and how readers can get in touch about privacy requests.
+      </p>
+    </section>
+
+    <section
+      class="mx-auto grid max-w-4xl gap-8 px-6 pb-[var(--space-section)] text-muted-foreground lg:px-10"
+    >
+      <div>
+        <h2 class="font-display text-2xl font-semibold text-foreground md:text-3xl">
+          Information we may collect
+        </h2>
+        <p class="mt-4 leading-7">
+          The site may collect newsletter email addresses, contact messages, analytics events, and
+          advertising-related data when those features are enabled.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="font-display text-2xl font-semibold text-foreground md:text-3xl">
+          How we use it
+        </h2>
+        <p class="mt-4 leading-7">
+          Collected data may be used for publishing, responding to inquiries, sending email,
+          measuring traffic, improving content, and complying with legal obligations.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-semibold text-foreground md:text-3xl">Contact</h2>
+        <p class="mt-4 leading-7">
+          {
+            siteConfig.email ? (
+              <>
+                For privacy requests, contact{" "}
+                <a class="story-link text-accent" href={`mailto:${siteConfig.email}`}>
+                  {siteConfig.email}
+                </a>
+                .
+              </>
+            ) : (
+              "Add a privacy contact address in the central site configuration before publishing."
+            )
+          }
+        </p>
+      </div>
+    </section>
+  </main>
+  <SiteFooter />
+</BaseLayout>

@@ -1,0 +1,75 @@
+---
+import { Picture } from "astro:assets";
+import type { HTMLAttributes } from "astro/types";
+import type { Post } from "@/lib/posts";
+
+type ContentImage = Post["data"]["image"];
+type ImageProfile = "hero" | "feature" | "card" | "compact" | "rail" | "article";
+
+interface Props {
+  image: ContentImage;
+  alt?: string;
+  profile?: ImageProfile;
+  class?: string;
+  pictureClass?: string;
+  priority?: boolean;
+  loading?: "eager" | "lazy";
+  fetchpriority?: "high" | "low" | "auto";
+  sizes?: string;
+  widths?: number[];
+  quality?: number;
+}
+
+const widthPresets: Record<ImageProfile, number[]> = {
+  hero: [640, 960, 1280, 1600, 1800],
+  feature: [360, 640, 820, 1080, 1280],
+  card: [240, 360, 540, 720, 960],
+  compact: [160, 240, 320, 480],
+  rail: [280, 420, 560, 720],
+  article: [640, 960, 1280, 1600, 1800],
+};
+
+const sizePresets: Record<ImageProfile, string> = {
+  hero: "100vw",
+  feature: "(min-width: 1024px) 52rem, calc(100vw - 2.5rem)",
+  card: "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, calc(100vw - 2.5rem)",
+  compact: "7rem",
+  rail: "(min-width: 640px) 42vw, 72vw",
+  article: "min(100vw - 2.5rem, 77.5rem)",
+};
+
+const {
+  image,
+  alt,
+  profile = "card",
+  class: className,
+  pictureClass,
+  priority = false,
+  loading,
+  fetchpriority,
+  sizes = sizePresets[profile],
+  widths = widthPresets[profile],
+  quality = 74,
+} = Astro.props;
+
+const pictureAttributes: HTMLAttributes<"picture"> | undefined = pictureClass
+  ? { class: pictureClass }
+  : undefined;
+---
+
+<Picture
+  src={image.src}
+  alt={alt ?? image.alt}
+  width={image.src.width}
+  height={image.src.height}
+  formats={["webp"]}
+  fallbackFormat="jpg"
+  widths={widths}
+  sizes={sizes}
+  quality={quality}
+  priority={priority}
+  loading={loading}
+  fetchpriority={fetchpriority}
+  class={className}
+  pictureAttributes={pictureAttributes}
+/>

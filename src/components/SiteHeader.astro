@@ -1,0 +1,522 @@
+---
+import { navigation, siteConfig } from "@/config/site";
+import LocalIcon from "@/components/LocalIcon.astro";
+import OptimizedImage from "@/components/OptimizedImage.astro";
+import { formatDate, postHref, visiblePosts, type Post } from "@/lib/posts";
+
+interface Props {
+  posts: Post[];
+  variant?: "default" | "transparent";
+}
+
+const currentPath = Astro.url.pathname;
+const { posts, variant = "default" } = Astro.props;
+const isTransparent = variant === "transparent";
+const visiblePostList = visiblePosts(posts);
+const searchItems = visiblePostList.slice(0, 8);
+const mobileLatestPosts = visiblePostList.slice(0, 5);
+const isCurrentPath = (href: string) =>
+  currentPath === href || (href !== "/" && currentPath.startsWith(href));
+const socialIconByLabel = {
+  X: "twitter-x",
+  LinkedIn: "linkedin",
+  YouTube: "youtube",
+  RSS: "rss",
+} as const;
+const socials = siteConfig.socials.map((item) => ({
+  ...item,
+  icon: socialIconByLabel[item.label as keyof typeof socialIconByLabel] ?? "link-45deg",
+}));
+---
+
+<header class:list={["site-header", isTransparent && "site-header--transparent"]}>
+  <div
+    class="section-shell grid h-16 grid-cols-[1fr_auto] items-center gap-4 lg:grid-cols-[1fr_auto_1fr]"
+  >
+    <a href="/" class="wordmark shrink-0" aria-label={`${siteConfig.name} home`}>
+      <span>Helix</span>
+    </a>
+
+    <nav
+      class="hidden min-w-0 items-center justify-center gap-5 lg:flex"
+      aria-label="Primary navigation"
+    >
+      {
+        navigation.map((item) => (
+          <a
+            href={item.href}
+            aria-current={isCurrentPath(item.href) ? "page" : undefined}
+            class:list={[
+              "py-2 text-[0.9rem] font-semibold transition-colors",
+              isTransparent
+                ? isCurrentPath(item.href)
+                  ? "text-signal-mint"
+                  : "text-white/72 hover:text-white"
+                : isCurrentPath(item.href)
+                  ? "text-accent"
+                  : "text-muted-foreground hover:text-foreground",
+            ]}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="flex shrink-0 items-center justify-self-end gap-1">
+      <a
+        href="/search/"
+        class="site-search-trigger"
+        aria-label="Search Helix"
+        aria-haspopup="dialog"
+        aria-controls="site-search-dialog"
+        data-search-toggle
+      >
+        <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"></circle>
+          <path d="m16 16 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="square"
+          ></path>
+        </svg>
+      </a>
+      <button
+        type="button"
+        class="mobile-menu-toggle inline-grid h-10 w-10 place-items-center bg-transparent lg:hidden"
+        aria-controls="mobile-menu-panel"
+        aria-expanded="false"
+        data-mobile-menu-toggle
+      >
+        <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M4 7h16M4 12h16M4 17h16"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="square"></path>
+        </svg>
+        <span class="sr-only">Open navigation menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<dialog
+  id="site-search-dialog"
+  class="search-dialog"
+  aria-labelledby="site-search-title"
+  data-search-dialog
+>
+  <form
+    action="/search/"
+    method="get"
+    role="search"
+    class="search-command"
+    aria-label="Site search"
+    data-search-form
+  >
+    <div class="flex min-h-20 items-center gap-3 border-b border-border px-4">
+      <h2 id="site-search-title" class="sr-only">Search {siteConfig.name}</h2>
+      <label class="sr-only" for="site-search-input">Search stories</label>
+      <input
+        id="site-search-input"
+        name="q"
+        type="search"
+        class="min-w-0 flex-1 bg-transparent font-display text-xl font-semibold outline-none placeholder:text-muted-foreground"
+        placeholder="Search stories, subjects, authors..."
+        autocomplete="off"
+        data-search-input
+      />
+      <button
+        type="button"
+        class="grid h-10 w-10 place-items-center text-muted-foreground hover:text-foreground"
+        aria-label="Close search"
+        data-search-close
+      >
+        <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+          <path
+            d="m6 6 12 12M18 6 6 18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="square"></path>
+        </svg>
+      </button>
+    </div>
+    <p
+      class="px-4 pt-4 font-mono text-xs text-muted-foreground"
+      data-search-summary
+      aria-live="polite"
+    >
+      Start typing to search the archive.
+    </p>
+    <div class="grid p-3" data-search-results></div>
+  </form>
+</dialog>
+
+<div
+  id="mobile-menu-panel"
+  class="mobile-menu-panel lg:hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Navigation menu"
+  hidden
+>
+  <div class="flex items-center justify-between px-5 py-4 sm:px-8">
+    <a href="/" class="wordmark" aria-label={`${siteConfig.name} home`}>
+      <span>Helix</span>
+    </a>
+    <button
+      type="button"
+      class="grid h-10 w-10 place-items-center"
+      data-mobile-menu-close
+      aria-label="Close navigation menu"
+    >
+      <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+        <path
+          d="m6 6 12 12M18 6 6 18"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="square"></path>
+      </svg>
+    </button>
+  </div>
+  <nav class="px-5 pt-7 sm:px-8" aria-label="Mobile navigation">
+    <ul class="grid gap-1 text-left">
+      {
+        navigation.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              aria-current={isCurrentPath(item.href) ? "page" : undefined}
+              class="mobile-menu-link"
+            >
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+      <li><a href="/posts/" class="mobile-menu-link">Archive</a></li>
+    </ul>
+  </nav>
+
+  <section class="mt-8 px-5 sm:px-8" aria-labelledby="mobile-latest-heading">
+    <div class="mb-4 flex items-end justify-between gap-4">
+      <h2 id="mobile-latest-heading" class="font-display text-base font-semibold">
+        Latest stories
+      </h2>
+      <a href="/posts/" class="story-link font-mono text-xs text-accent">All stories</a>
+    </div>
+
+    <div class="mobile-post-rail" data-mobile-post-rail>
+      {
+        mobileLatestPosts.map((post) => (
+          <a href={postHref(post)} class="mobile-post-slide group">
+            <span class="image-frame block aspect-[4/3]">
+              <OptimizedImage image={post.data.image} profile="rail" />
+            </span>
+            <span class="label-line mt-3 block text-accent">
+              {post.data.category} / {formatDate(post.data.date)}
+            </span>
+            <span class="mt-1.5 block font-display text-[1.05rem] font-semibold leading-tight text-balance transition-colors group-hover:text-accent">
+              {post.data.title}
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <div class="mt-auto px-5 pb-7 pt-8 sm:px-8">
+    <h2 class="sr-only">Follow {siteConfig.name}</h2>
+    <div class="flex flex-wrap gap-3">
+      {
+        socials.map((item) => (
+          <a
+            href={item.href}
+            class="mobile-social-link"
+            aria-label={item.label === "RSS" ? "RSS feed" : `${siteConfig.name} on ${item.label}`}
+            rel={item.href.startsWith("http") ? "noreferrer" : undefined}
+          >
+            <LocalIcon name={item.icon} className="h-4 w-4" />
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<script
+  is:inline
+  type="application/json"
+  id="site-search-fallback"
+  set:html={JSON.stringify(
+    searchItems.map((post) => ({
+      title: post.data.title,
+      description: post.data.description,
+      href: postHref(post),
+      category: post.data.category,
+      author: post.data.author.name,
+      date: formatDate(post.data.date),
+    })),
+  )}
+/>
+
+<script is:inline>
+  (() => {
+    const searchDialog = document.querySelector("[data-search-dialog]");
+    const searchToggle = document.querySelector("[data-search-toggle]");
+    const searchClose = searchDialog?.querySelector("[data-search-close]");
+    const searchInput = searchDialog?.querySelector("[data-search-input]");
+    const searchResults = searchDialog?.querySelector("[data-search-results]");
+    const searchSummary = searchDialog?.querySelector("[data-search-summary]");
+    let siteSearchData = [];
+    let siteSearchDataPromise;
+    const siteSearchFallback = JSON.parse(
+      document.getElementById("site-search-fallback")?.textContent || "[]",
+    );
+
+    const loadSearchData = async () => {
+      if (siteSearchData.length > 0) return siteSearchData;
+      siteSearchDataPromise ??= fetch("/search-index.json")
+        .then((response) => (response.ok ? response.json() : siteSearchFallback))
+        .then((items) => {
+          siteSearchData = Array.isArray(items) ? items : siteSearchFallback;
+          return siteSearchData;
+        })
+        .catch(() => siteSearchFallback);
+      return siteSearchDataPromise;
+    };
+
+    const escapeHtml = (value) =>
+      String(value).replace(
+        /[&<>"']/g,
+        (character) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[character],
+      );
+
+    const markup = (item) => `
+      <a href="${escapeHtml(item.href)}" class="block px-3 py-3 hover:bg-muted focus-visible:bg-muted">
+        <span class="block font-display text-lg font-bold">${escapeHtml(item.title)}</span>
+        <span class="mt-1 block font-mono text-xs text-muted-foreground">${escapeHtml(item.category)} / ${escapeHtml(item.date)}</span>
+      </a>
+    `;
+
+    const render = async () => {
+      if (!searchInput || !searchResults || !searchSummary) return;
+      const query = searchInput.value.trim().toLowerCase();
+      const items = await loadSearchData();
+      const matches = query
+        ? items
+            .filter((item) =>
+              [item.title, item.description, item.category, item.author, ...(item.tags || [])]
+                .join(" ")
+                .toLowerCase()
+                .includes(query),
+            )
+            .slice(0, 8)
+        : items.slice(0, 5);
+      searchSummary.textContent = query
+        ? `${matches.length} results for "${searchInput.value.trim()}".`
+        : "Latest Helix stories.";
+      searchResults.innerHTML = matches.length
+        ? matches.map(markup).join("")
+        : `<p class="px-3 py-8 text-muted-foreground">No matching stories found.</p>`;
+    };
+
+    const openSearch = () => {
+      if (!searchDialog || !searchInput || typeof searchDialog.showModal !== "function") return;
+      if (!searchDialog.open) searchDialog.showModal();
+      document.documentElement.classList.add("has-open-search");
+      void render();
+      window.requestAnimationFrame(() => searchInput.focus());
+    };
+
+    searchToggle?.addEventListener("click", (event) => {
+      if (!searchDialog || typeof searchDialog.showModal !== "function") return;
+      event.preventDefault();
+      openSearch();
+    });
+    searchClose?.addEventListener("click", () => searchDialog?.close());
+    searchDialog?.addEventListener("close", () =>
+      document.documentElement.classList.remove("has-open-search"),
+    );
+    searchDialog?.addEventListener("click", (event) => {
+      if (event.target === searchDialog) searchDialog.close();
+    });
+    searchInput?.addEventListener("input", () => void render());
+    document.addEventListener("keydown", (event) => {
+      const target = event.target;
+      const isEditing =
+        target instanceof HTMLElement &&
+        (target.matches("input, textarea, select") || target.isContentEditable);
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchDialog?.open ? searchDialog.close() : openSearch();
+      } else if (event.key === "/" && !isEditing) {
+        event.preventDefault();
+        openSearch();
+      }
+    });
+
+    const siteHeader = document.querySelector(".site-header");
+    if (siteHeader) {
+      let previousScrollY = window.scrollY;
+      const updateHeader = () => {
+        const currentScrollY = window.scrollY;
+        const scrollingDown =
+          currentScrollY > previousScrollY && currentScrollY > siteHeader.offsetHeight;
+        siteHeader.classList.toggle("is-hidden", scrollingDown);
+        siteHeader.classList.toggle("is-scrolled", currentScrollY > 8);
+        if (currentScrollY <= 8) {
+          siteHeader.classList.remove("is-hidden");
+        }
+        previousScrollY = currentScrollY;
+      };
+      updateHeader();
+      window.addEventListener("scroll", updateHeader, { passive: true });
+    }
+
+    const mobileMenuButton = document.querySelector("[data-mobile-menu-toggle]");
+    const mobileMenuPanel = document.getElementById("mobile-menu-panel");
+    if (mobileMenuButton && mobileMenuPanel) {
+      const close = mobileMenuPanel.querySelector("[data-mobile-menu-close]");
+      const latestRail = mobileMenuPanel.querySelector("[data-mobile-post-rail]");
+      let menuReturnFocus;
+      const setOpen = (open) => {
+        if (open) menuReturnFocus = document.activeElement;
+        mobileMenuPanel.hidden = !open;
+        mobileMenuButton.setAttribute("aria-expanded", String(open));
+        document.documentElement.classList.toggle("has-open-menu", open);
+        if (open) close?.focus();
+        else if (menuReturnFocus instanceof HTMLElement) menuReturnFocus.focus();
+      };
+      mobileMenuButton.addEventListener("click", () =>
+        setOpen(mobileMenuButton.getAttribute("aria-expanded") !== "true"),
+      );
+      close?.addEventListener("click", () => setOpen(false));
+      mobileMenuPanel
+        .querySelectorAll("a")
+        .forEach((link) => link.addEventListener("click", () => setOpen(false)));
+      document.addEventListener("keydown", (event) => {
+        if (mobileMenuPanel.hidden) return;
+        if (event.key === "Escape") {
+          setOpen(false);
+          return;
+        }
+        if (event.key !== "Tab") return;
+        const focusable = Array.from(
+          mobileMenuPanel.querySelectorAll(
+            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((element) => element instanceof HTMLElement && !element.hasAttribute("hidden"));
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      });
+
+      if (latestRail) {
+        let dragStartX = 0;
+        let dragStartScroll = 0;
+        let dragMoved = false;
+        let isDraggingRail = false;
+
+        latestRail.addEventListener("pointerdown", (event) => {
+          if (event.pointerType !== "mouse" || event.button !== 0) return;
+          event.preventDefault();
+          isDraggingRail = true;
+          dragStartX = event.clientX;
+          dragStartScroll = latestRail.scrollLeft;
+          dragMoved = false;
+          latestRail.classList.add("is-dragging");
+        });
+
+        latestRail.addEventListener("pointermove", (event) => {
+          if (!isDraggingRail || event.pointerType !== "mouse") return;
+          const delta = event.clientX - dragStartX;
+          if (Math.abs(delta) > 4) dragMoved = true;
+          latestRail.scrollLeft = dragStartScroll - delta;
+        });
+
+        const endRailDrag = () => {
+          latestRail.classList.remove("is-dragging");
+          isDraggingRail = false;
+        };
+
+        latestRail.addEventListener("pointerup", endRailDrag);
+        latestRail.addEventListener("pointercancel", endRailDrag);
+        latestRail.addEventListener(
+          "click",
+          (event) => {
+            if (!dragMoved) return;
+            dragMoved = false;
+            event.preventDefault();
+            event.stopPropagation();
+          },
+          { capture: true },
+        );
+      }
+    }
+  })();
+</script>
+
+<style>
+  .site-search-trigger {
+    display: inline-flex;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--muted-foreground);
+    text-decoration: none;
+    transition:
+      color 160ms ease,
+      background-color 160ms ease;
+  }
+
+  .site-search-trigger:hover,
+  .site-search-trigger:focus-visible {
+    background: var(--muted);
+    color: var(--foreground);
+  }
+
+  .search-dialog {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    background: transparent;
+    padding: clamp(1rem, 10vh, 6rem) 1rem 1rem;
+  }
+
+  .search-dialog[open] {
+    display: grid;
+    justify-content: center;
+  }
+
+  .search-dialog::backdrop {
+    background: color-mix(in srgb, var(--midnight) 68%, transparent);
+  }
+
+  .search-command {
+    width: min(43rem, calc(100vw - 2rem));
+    max-height: 72vh;
+    overflow: auto;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--foreground);
+    border-radius: var(--radius-md);
+  }
+</style>

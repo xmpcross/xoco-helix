@@ -1,0 +1,538 @@
+---
+import { getCollection } from "astro:content";
+import NewsletterSignup from "@/components/NewsletterSignup.astro";
+import OptimizedImage from "@/components/OptimizedImage.astro";
+import PostCard from "@/components/PostCard.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { siteConfig } from "@/config/site";
+import {
+  categories,
+  categorySlug,
+  excludePosts,
+  formatDate,
+  getByCategory,
+  getFeaturedStories,
+  getLeadStory,
+  getTrending,
+  postHref,
+  visiblePosts,
+} from "@/lib/posts";
+
+const allPosts = visiblePosts(await getCollection("posts"));
+const lead = getLeadStory(allPosts);
+const featured = getFeaturedStories(excludePosts(allPosts, [lead]), 6);
+const frontFeature = featured[0] ?? excludePosts(allPosts, [lead])[0];
+const frontExcluded = [lead, ...(frontFeature ? [frontFeature] : [])];
+const frontLatest = excludePosts(allPosts, frontExcluded).slice(0, 4);
+const editorsPicks = getTrending(excludePosts(allPosts, [...frontExcluded, ...frontLatest]), 4);
+
+const fieldReports = allPosts
+  .filter((post) => post.data.articleType === "Field Report")
+  .slice(0, 6);
+const fieldLead = fieldReports[0];
+const fieldSupport = fieldReports.slice(1);
+
+const spaceStories = getByCategory(allPosts, "Space", 8);
+const lifeStories = getByCategory(allPosts, "Life", 4);
+const earthStories = getByCategory(allPosts, "Earth", 5);
+const healthStories = getByCategory(allPosts, "Health", 6);
+const physicsStories = getByCategory(allPosts, "Physics", 8);
+const technologyStories = getByCategory(allPosts, "Technology", 4);
+const latestStories = allPosts.slice(0, 12);
+const categorySlides = categories.map((category) => {
+  const posts = getByCategory(allPosts, category);
+
+  return {
+    category,
+    count: posts.length,
+    image: posts[0]?.data.image,
+  };
+});
+---
+
+<BaseLayout>
+  <SiteHeader posts={allPosts} variant="transparent" />
+  <main id="content">
+    <h1 class="sr-only">{siteConfig.name} science publication</h1>
+
+    {lead && <PostCard post={lead} variant="lead" eager headingLevel="h2" />}
+
+    <section class="section-shell py-14 sm:py-16" aria-label="Front page briefing">
+      <div class="grid gap-12 lg:grid-cols-[14rem_minmax(0,1fr)_19rem] lg:gap-9">
+        <aside class="order-2 self-start lg:order-1" aria-labelledby="front-latest-heading">
+          <h2 id="front-latest-heading" class="font-display text-2xl font-semibold">Latest</h2>
+          <div class="mt-2">
+            {frontLatest.map((post) => <PostCard post={post} variant="brief" headingLevel="h3" />)}
+          </div>
+          <a href="/posts/" class="story-link mt-4 inline-block font-mono text-xs text-accent">
+            Open the archive
+          </a>
+        </aside>
+
+        {
+          frontFeature && (
+            <article class="group order-1 lg:order-2">
+              <a href={postHref(frontFeature)} class="image-frame block aspect-[16/10]">
+                <OptimizedImage image={frontFeature.data.image} profile="feature" loading="eager" />
+              </a>
+              <p class="label-line mt-4 text-accent">
+                {frontFeature.data.category} / {frontFeature.data.articleType}
+              </p>
+              <h2 class="mt-2 font-display text-[clamp(1.65rem,2.6vw,2.25rem)] font-semibold leading-[1.08]">
+                <a href={postHref(frontFeature)} class="headline-accent">
+                  {frontFeature.data.title}
+                </a>
+              </h2>
+              <p class="mt-4 max-w-3xl text-pretty text-[1.02rem] leading-7 text-muted-foreground">
+                {frontFeature.data.description}
+              </p>
+              <p class="label-line mt-4">
+                {frontFeature.data.author.name} / {formatDate(frontFeature.data.date)} /
+                {frontFeature.data.readingTime} min
+              </p>
+            </article>
+          )
+        }
+
+        <aside class="order-3 self-start" aria-labelledby="editors-picks-heading">
+          <div>
+            <h2 id="editors-picks-heading" class="font-display text-2xl font-semibold">
+              Worth your time
+            </h2>
+          </div>
+          <div class="mt-2">
+            {
+              editorsPicks.map((post) => (
+                <PostCard post={post} variant="compact" headingLevel="h3" />
+              ))
+            }
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section
+      id="desks"
+      class="bg-[color:var(--background-wash)]"
+      aria-labelledby="category-slider-heading"
+      data-slider
+    >
+      <div class="section-shell py-[var(--space-section)]">
+        <header class="mb-8">
+          <h2 id="category-slider-heading" class="section-title">Six fields of inquiry</h2>
+        </header>
+
+        <div class="category-rail" data-rail>
+          {
+            categorySlides.map((slide) => (
+              <a href={`/category/${categorySlug(slide.category)}/`} class="group block">
+                <div class="category-slide-image">
+                  {slide.image && <OptimizedImage image={slide.image} profile="rail" />}
+                </div>
+                <div class="pt-4">
+                  <h3 class="font-display text-[1.45rem] font-semibold leading-none transition-colors group-hover:text-accent">
+                    {slide.category}
+                  </h3>
+                  <span class="mt-2 block font-mono text-[0.68rem] text-accent">
+                    {slide.count} stories
+                  </span>
+                </div>
+              </a>
+            ))
+          }
+        </div>
+
+        <div class="mt-8 flex items-center gap-3">
+          <div class="slider-track" aria-hidden="true">
+            <div class="slider-fill" data-slider-fill></div>
+          </div>
+          <button
+            type="button"
+            class="slider-arrow"
+            data-slider-prev
+            aria-label="Previous category"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="m15 6-6 6 6 6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </button>
+          <button type="button" class="slider-arrow" data-slider-next aria-label="Next category">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="m9 6 6 6-6 6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    {
+      fieldLead && (
+        <section class="bg-surface" aria-labelledby="field-notes-heading">
+          <div class="section-shell py-[var(--space-section)]">
+            <header class="mb-8 flex flex-wrap items-end justify-between gap-5">
+              <div>
+                <h2 id="field-notes-heading" class="section-title">
+                  Field notes
+                </h2>
+                <p class="mt-3 max-w-2xl leading-7 text-muted-foreground">
+                  Reporting from coastlines, observatories, test sites, and laboratories where
+                  measurements meet difficult conditions.
+                </p>
+              </div>
+            </header>
+
+            <div class="grid items-stretch gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(19rem,0.65fr)]">
+              <article class="group relative isolate min-h-[30rem] overflow-hidden bg-midnight sm:min-h-[34rem]">
+                <OptimizedImage
+                  image={fieldLead.data.image}
+                  profile="hero"
+                  class="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div
+                  class="absolute inset-0 bg-[linear-gradient(to_top,rgba(7,21,34,0.96)_0%,rgba(7,21,34,0.25)_65%,rgba(7,21,34,0.05)_100%)]"
+                  aria-hidden="true"
+                />
+                <div class="absolute inset-x-0 bottom-0 z-10 p-6 text-white sm:p-8">
+                  <p class="font-mono text-xs text-signal-mint">
+                    {fieldLead.data.category} / {fieldLead.data.articleType}
+                  </p>
+                  <h3 class="mt-3 max-w-3xl font-display text-[clamp(2rem,4vw,3.35rem)] font-semibold leading-[1.02] text-balance">
+                    <a href={postHref(fieldLead)} class="transition-colors hover:text-signal-mint">
+                      {fieldLead.data.title}
+                    </a>
+                  </h3>
+                  <p class="mt-4 max-w-2xl text-pretty leading-7 text-white/80">
+                    {fieldLead.data.description}
+                  </p>
+                </div>
+              </article>
+
+              <div class="self-start">
+                {fieldSupport.map((post) => (
+                  <PostCard post={post} variant="compact" headingLevel="h3" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    <section class="section-shell py-[var(--space-section)]" aria-labelledby="planetary-heading">
+      <header class="mb-9 max-w-3xl">
+        <h2 id="planetary-heading" class="section-title">Planetary systems</h2>
+        <p class="mt-3 leading-7 text-muted-foreground">
+          Two scales of observation: a changing Earth beneath us and distant signals arriving
+          through the atmosphere.
+        </p>
+      </header>
+
+      <div class="grid gap-14 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
+        <section aria-labelledby="earth-desk-heading">
+          <div class="mb-5 flex items-baseline justify-between gap-4">
+            <h3 id="earth-desk-heading" class="font-display text-2xl font-semibold">
+              Earth systems
+            </h3>
+            <a href="/category/earth/" class="story-link font-mono text-xs text-accent">
+              All Earth
+            </a>
+          </div>
+          {
+            earthStories[0] && (
+              <PostCard post={earthStories[0]} variant="secondary" headingLevel="h4" />
+            )
+          }
+          <div class="mt-4 grid gap-x-7 md:grid-cols-2">
+            {
+              earthStories
+                .slice(1)
+                .map((post) => <PostCard post={post} variant="compact" headingLevel="h4" />)
+            }
+          </div>
+        </section>
+
+        <section
+          class="bg-[color:var(--background-wash)] p-6 sm:p-8"
+          aria-labelledby="space-signals-heading"
+        >
+          <div class="flex items-baseline justify-between gap-4">
+            <h3 id="space-signals-heading" class="font-display text-2xl font-semibold">
+              Signals from space
+            </h3>
+            <a href="/category/space/" class="story-link font-mono text-xs text-accent"> Space </a>
+          </div>
+          <div class="mt-3">
+            {
+              spaceStories.map((post, index) => (
+                <PostCard post={post} variant="ranked" rank={index + 1} headingLevel="h4" />
+              ))
+            }
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="bg-[color:var(--background-wash)]" aria-labelledby="living-world-heading">
+      <div class="section-shell py-[var(--space-section)]">
+        <header class="mb-9">
+          <h2 id="living-world-heading" class="section-title">The living world</h2>
+          <p class="mt-3 max-w-2xl leading-7 text-muted-foreground">
+            Ecology at the scale of habitats, and health evidence at the scale of populations.
+          </p>
+        </header>
+
+        <div class="grid gap-12 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+          <section aria-labelledby="life-desk-heading">
+            <div class="mb-5 flex items-baseline justify-between gap-4">
+              <h3 id="life-desk-heading" class="font-display text-2xl font-semibold">
+                Life, observed
+              </h3>
+              <a href="/category/life/" class="story-link font-mono text-xs text-accent">
+                All Life
+              </a>
+            </div>
+            {
+              lifeStories[0] && (
+                <article class="grid overflow-hidden bg-midnight text-white md:grid-cols-[1.15fr_0.85fr]">
+                  <a href={postHref(lifeStories[0])} class="image-frame min-h-[21rem] rounded-none">
+                    <OptimizedImage image={lifeStories[0].data.image} profile="feature" />
+                  </a>
+                  <div class="flex flex-col justify-end p-7 sm:p-9">
+                    <p class="font-mono text-xs text-signal-mint">
+                      {lifeStories[0].data.articleType}
+                    </p>
+                    <h4 class="mt-3 font-display text-[1.8rem] font-semibold leading-[1.08] text-balance">
+                      <a
+                        href={postHref(lifeStories[0])}
+                        class="transition-colors hover:text-signal-mint"
+                      >
+                        {lifeStories[0].data.title}
+                      </a>
+                    </h4>
+                    <p class="mt-4 text-pretty leading-7 text-white/76">
+                      {lifeStories[0].data.description}
+                    </p>
+                  </div>
+                </article>
+              )
+            }
+            <div class="mt-7 grid gap-7 sm:grid-cols-3">
+              {
+                lifeStories
+                  .slice(1)
+                  .map((post) => <PostCard post={post} variant="medium" headingLevel="h4" />)
+              }
+            </div>
+          </section>
+
+          <aside aria-labelledby="health-desk-heading">
+            <div class="mb-5 flex items-baseline justify-between gap-4">
+              <h3 id="health-desk-heading" class="font-display text-2xl font-semibold">
+                Health &amp; mind
+              </h3>
+              <a href="/category/health/" class="story-link font-mono text-xs text-accent">
+                Health
+              </a>
+            </div>
+            <div>
+              {
+                healthStories.map((post) => (
+                  <PostCard post={post} variant="compact" headingLevel="h4" />
+                ))
+              }
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <NewsletterSignup />
+
+    <section class="section-shell py-[var(--space-section)]" aria-labelledby="frontiers-heading">
+      <header class="mb-9 flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <h2 id="frontiers-heading" class="section-title">Physics &amp; technology</h2>
+          <p class="mt-3 max-w-2xl leading-7 text-muted-foreground">
+            Precision experiments beside the engineering systems built to work outside ideal
+            conditions.
+          </p>
+        </div>
+      </header>
+
+      <div class="grid gap-14 lg:grid-cols-[minmax(18rem,0.75fr)_minmax(0,1.25fr)]">
+        <section aria-labelledby="physics-desk-heading">
+          <div class="flex items-baseline justify-between gap-4">
+            <h3 id="physics-desk-heading" class="font-display text-2xl font-semibold">
+              The measurement desk
+            </h3>
+            <a href="/category/physics/" class="story-link font-mono text-xs text-accent">
+              Physics
+            </a>
+          </div>
+          <div class="mt-3">
+            {
+              physicsStories.map((post, index) => (
+                <PostCard post={post} variant="ranked" rank={index + 1} headingLevel="h4" />
+              ))
+            }
+          </div>
+        </section>
+
+        <section aria-labelledby="technology-desk-heading">
+          <div class="mb-5 flex items-baseline justify-between gap-4">
+            <h3 id="technology-desk-heading" class="font-display text-2xl font-semibold">
+              Technology in practice
+            </h3>
+            <a href="/category/technology/" class="story-link font-mono text-xs text-accent">
+              Technology
+            </a>
+          </div>
+          <div class="grid gap-x-7 gap-y-9 sm:grid-cols-2">
+            {
+              technologyStories.map((post) => (
+                <PostCard post={post} variant="medium" headingLevel="h4" />
+              ))
+            }
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="bg-surface" aria-labelledby="latest-stories-heading">
+      <div class="section-shell py-[var(--space-section)]">
+        <header class="mb-6 flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <h2 id="latest-stories-heading" class="section-title">Latest stories</h2>
+            <p class="mt-2 text-muted-foreground">The newest reporting across every Helix desk.</p>
+          </div>
+          <a href="/posts/" class="story-link font-mono text-xs text-accent">
+            Browse all stories
+          </a>
+        </header>
+        <div class="grid gap-x-10 lg:grid-cols-2">
+          {
+            latestStories.map((post) => (
+              <PostCard post={post} variant="compact" headingLevel="h3" />
+            ))
+          }
+        </div>
+      </div>
+    </section>
+  </main>
+  <SiteFooter />
+
+  <script is:inline>
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const sliderControls = (rail) => {
+      const slider = rail.closest("[data-slider]");
+      return {
+        prev: slider?.querySelector("[data-slider-prev]") ?? null,
+        next: slider?.querySelector("[data-slider-next]") ?? null,
+        fill: slider?.querySelector("[data-slider-fill]") ?? null,
+      };
+    };
+
+    const updateSlider = (rail) => {
+      const { prev, next, fill } = sliderControls(rail);
+      const max = rail.scrollWidth - rail.clientWidth;
+
+      if (prev) prev.disabled = rail.scrollLeft <= 4;
+      if (next) next.disabled = rail.scrollLeft >= max - 4;
+      if (fill)
+        fill.style.width = `${max > 0 ? Math.min(100, (rail.scrollLeft / max) * 100) : 100}%`;
+    };
+
+    const rails = document.querySelectorAll("[data-rail]");
+    rails.forEach((rail) => updateSlider(rail));
+
+    document.addEventListener(
+      "scroll",
+      (event) => {
+        const rail = event.target instanceof Element ? event.target : null;
+        if (rail?.matches("[data-rail]")) updateSlider(rail);
+      },
+      { capture: true, passive: true },
+    );
+
+    window.addEventListener("resize", () => {
+      rails.forEach((rail) => updateSlider(rail));
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const button = target?.closest("[data-slider-prev], [data-slider-next]");
+      if (!button) return;
+
+      const rail = button.closest("[data-slider]")?.querySelector("[data-rail]");
+      if (!rail) return;
+
+      const card = rail.querySelector(":scope > *");
+      const step = card ? card.getBoundingClientRect().width + 20 : rail.clientWidth * 0.8;
+      const direction = button.hasAttribute("data-slider-prev") ? -1 : 1;
+
+      rail.scrollBy({
+        left: direction * step,
+        behavior: reducedMotion.matches ? "auto" : "smooth",
+      });
+    });
+
+    let dragRail = null;
+    let dragStartX = 0;
+    let dragStartScroll = 0;
+    let dragMoved = false;
+
+    document.addEventListener("pointerdown", (event) => {
+      if (event.pointerType !== "mouse" || event.button !== 0) return;
+      const rail = event.target instanceof Element ? event.target.closest("[data-rail]") : null;
+      if (!rail) return;
+
+      event.preventDefault();
+      dragRail = rail;
+      dragStartX = event.clientX;
+      dragStartScroll = rail.scrollLeft;
+      dragMoved = false;
+      rail.classList.add("is-dragging");
+    });
+
+    document.addEventListener("pointermove", (event) => {
+      if (!dragRail || event.pointerType !== "mouse") return;
+      const delta = event.clientX - dragStartX;
+      if (Math.abs(delta) > 4) dragMoved = true;
+      dragRail.scrollLeft = dragStartScroll - delta;
+    });
+
+    const endRailDrag = () => {
+      dragRail?.classList.remove("is-dragging");
+      dragRail = null;
+    };
+
+    document.addEventListener("pointerup", endRailDrag);
+    document.addEventListener("pointercancel", endRailDrag);
+    document.addEventListener(
+      "click",
+      (event) => {
+        if (!dragMoved) return;
+        dragMoved = false;
+        const link = event.target instanceof Element ? event.target.closest("[data-rail] a") : null;
+        if (!link) return;
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      { capture: true },
+    );
+  </script>
+</BaseLayout>

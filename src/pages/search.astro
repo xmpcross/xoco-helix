@@ -1,0 +1,133 @@
+---
+import { getCollection } from "astro:content";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { siteConfig } from "@/config/site";
+import { authorSlug, formatDate, postHref, visiblePosts } from "@/lib/posts";
+
+const allPosts = visiblePosts(await getCollection("posts"));
+const searchItems = allPosts.map((post) => ({
+  title: post.data.title,
+  description: post.data.description,
+  href: postHref(post),
+  category: post.data.category,
+  author: post.data.author.name,
+  authorHref: `/author/${authorSlug(post.data.author.name)}/`,
+  tags: post.data.tags,
+  date: formatDate(post.data.date),
+  status: post.data.researchStatus,
+}));
+---
+
+<BaseLayout title="Search" description={`Search ${siteConfig.name} science reporting.`} noindex>
+  <SiteHeader posts={allPosts} />
+  <main id="content" class="min-h-screen">
+    <header class="section-shell page-header">
+      <p class="page-kicker">Search the publication</p>
+      <h1 class="page-title">Find a story</h1>
+      <p class="page-intro">
+        Search subjects, authors, evidence status, and every story in the Helix archive.
+      </p>
+      <form
+        class="mt-8 max-w-[48rem]"
+        role="search"
+        aria-label="Story search"
+        action="/search/"
+        method="get"
+      >
+        <label class="sr-only" for="search-page-input">Search stories</label>
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <input
+            id="search-page-input"
+            name="q"
+            type="search"
+            class="min-h-14 min-w-0 flex-1 border border-border bg-surface px-4 text-lg outline-none placeholder:text-muted-foreground focus:border-accent"
+            placeholder="Search climate, reefs, neutrinos..."
+            autocomplete="off"
+            data-search-page-input
+          />
+          <button
+            type="submit"
+            class="min-h-14 rounded-[4px] bg-accent px-6 font-semibold text-accent-foreground transition-colors hover:bg-accent-strong"
+            >Search</button
+          >
+        </div>
+      </form>
+    </header>
+
+    <section class="section-shell pb-[var(--space-section)]">
+      <p class="font-mono text-sm text-muted-foreground" data-search-page-summary>
+        Type to search {searchItems.length} stories.
+      </p>
+      <div class="mt-4 max-w-4xl" data-search-page-results></div>
+    </section>
+  </main>
+  <SiteFooter />
+
+  <script
+    is:inline
+    type="application/json"
+    id="search-page-data"
+    set:html={JSON.stringify(searchItems)}
+  />
+  <script is:inline>
+    (() => {
+      const input = document.querySelector("[data-search-page-input]");
+      const results = document.querySelector("[data-search-page-results]");
+      const summary = document.querySelector("[data-search-page-summary]");
+      const data = JSON.parse(document.getElementById("search-page-data")?.textContent || "[]");
+      const escapeHtml = (value) =>
+        String(value).replace(
+          /[&<>"']/g,
+          (character) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[character],
+        );
+      const matches = (item, query) =>
+        [
+          item.title,
+          item.description,
+          item.category,
+          item.author,
+          item.status,
+          ...(item.tags || []),
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      const render = () => {
+        if (!input || !results || !summary) return;
+        const query = input.value.trim().toLowerCase();
+        const found = query ? data.filter((item) => matches(item, query)) : data.slice(0, 5);
+        summary.textContent = query
+          ? `${found.length} results for "${input.value.trim()}".`
+          : `Latest from ${data.length} searchable stories.`;
+        results.innerHTML = found
+          .map(
+            (item) => `
+            <article class="grid gap-2 py-5 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-6">
+              <p class="font-mono text-xs leading-5 text-muted-foreground">${escapeHtml(item.category)}<br>${escapeHtml(item.date)}<br>${escapeHtml(item.status)}</p>
+              <div>
+                <h2 class="font-display text-[1.35rem] font-semibold leading-tight"><a href="${escapeHtml(item.href)}" class="headline-accent">${escapeHtml(item.title)}</a></h2>
+                <p class="mt-2 text-sm leading-6 text-muted-foreground">${escapeHtml(item.description)}</p>
+                <p class="mt-2 text-sm font-semibold">${escapeHtml(item.author)}</p>
+              </div>
+            </article>
+          `,
+          )
+          .join("");
+      };
+      if (input) {
+        input.value = new URLSearchParams(window.location.search).get("q") || "";
+        render();
+        input.addEventListener("input", render);
+      }
+    })();
+  </script>
+</BaseLayout>

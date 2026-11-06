@@ -1,0 +1,59 @@
+---
+import { getCollection } from "astro:content";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { visiblePosts } from "@/lib/posts";
+
+const allPosts = visiblePosts(await getCollection("posts"));
+const standards = [
+  [
+    "Evidence Labels",
+    "Every story distinguishes peer-reviewed work, preprints, analysis, field reporting, interviews, and explainers.",
+  ],
+  [
+    "Uncertainty",
+    "We name limits, sample sizes, competing explanations, and what researchers do not yet know.",
+  ],
+  [
+    "Images and Data",
+    "Captions identify credits and context. Demonstration data is labeled as demonstration data.",
+  ],
+  [
+    "Corrections",
+    "Corrections remain attached to the article and include the nature of the change.",
+  ],
+];
+---
+
+<BaseLayout
+  title="Editorial Standards"
+  description="How Helix reports, labels, updates, and corrects science stories."
+>
+  <SiteHeader posts={allPosts} />
+  <main id="content" class="min-h-screen">
+    <section class="section-shell page-header">
+      <p class="page-kicker">Editorial standards</p>
+      <h1 class="page-title">How Helix handles evidence</h1>
+      <p class="page-intro">
+        Science changes by design. Our templates are built to show status, sourcing, limits, and
+        updates without turning uncertainty into confusion.
+      </p>
+    </section>
+    <section class="section-shell pb-[var(--space-section)]">
+      <div class="grid gap-5 md:grid-cols-2">
+        {
+          standards.map(([title, copy]) => (
+            <section class="bg-surface p-6">
+              <>
+                <h2 class="font-display text-2xl font-semibold">{title}</h2>
+                <p class="mt-3 leading-7 text-muted-foreground">{copy}</p>
+              </>
+            </section>
+          ))
+        }
+      </div>
+    </section>
+  </main>
+  <SiteFooter />
+</BaseLayout>

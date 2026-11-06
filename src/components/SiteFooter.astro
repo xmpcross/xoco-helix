@@ -1,0 +1,85 @@
+---
+import { navigation, siteConfig } from "@/config/site";
+import LocalIcon from "@/components/LocalIcon.astro";
+
+const socialIconByLabel = {
+  X: "twitter-x",
+  LinkedIn: "linkedin",
+  YouTube: "youtube",
+  RSS: "rss",
+} as const;
+
+const socials = siteConfig.socials.map((item) => ({
+  ...item,
+  icon: socialIconByLabel[item.label as keyof typeof socialIconByLabel] ?? "link-45deg",
+}));
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="site-footer bg-primary text-primary-foreground">
+  <div class="mx-auto grid layout-wide gap-10 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr] lg:px-8">
+    <div>
+      <a href="/" class="wordmark" aria-label={`${siteConfig.name} home`}>
+        <span>Helix</span>
+      </a>
+      <p class="mt-5 max-w-sm text-pretty text-sm leading-6 text-primary-foreground/72">
+        {siteConfig.description}
+      </p>
+    </div>
+
+    <nav aria-label="Subjects">
+      <h2 class="font-display text-base font-bold">Subjects</h2>
+      <ul class="mt-4 grid gap-2 text-sm text-primary-foreground/72">
+        {
+          navigation.map((item) => (
+            <li>
+              <a href={item.href} class="story-link hover:text-white">
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <nav aria-label="Publication">
+      <h2 class="font-display text-base font-bold">Publication</h2>
+      <ul class="mt-4 grid gap-2 text-sm text-primary-foreground/72">
+        <li><a href="/about/" class="story-link hover:text-white">About Helix</a></li>
+        <li><a href="/contact/" class="story-link hover:text-white">Contact</a></li>
+        <li><a href="/standards/" class="story-link hover:text-white">Editorial Standards</a></li>
+      </ul>
+    </nav>
+
+    <div>
+      <h2 class="font-display text-base font-bold">Follow</h2>
+      <div class="mt-4 flex flex-wrap gap-2">
+        {
+          socials.map((item) => (
+            <a
+              href={item.href}
+              class="inline-grid h-10 w-10 items-center justify-items-start text-primary-foreground/74 transition-colors hover:text-signal-mint focus-visible:text-signal-mint"
+              aria-label={item.label === "RSS" ? "RSS feed" : `${siteConfig.name} on ${item.label}`}
+              rel={item.href.startsWith("http") ? "noreferrer" : undefined}
+            >
+              <LocalIcon name={item.icon} className="h-4 w-4" />
+            </a>
+          ))
+        }
+      </div>
+      <ul class="mt-6 grid gap-2 text-sm text-primary-foreground/72">
+        <li><a href="/rss.xml" class="story-link">RSS</a></li>
+        <li><a href="/sitemap.xml" class="story-link">Sitemap</a></li>
+        <li><a href="/privacy/" class="story-link">Privacy</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="border-t border-primary-foreground/12">
+    <div
+      class="mx-auto flex layout-wide flex-col justify-between gap-3 px-5 py-6 font-mono text-xs text-primary-foreground/58 sm:flex-row lg:px-8"
+    >
+      <p>&copy; {currentYear} {siteConfig.name}. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

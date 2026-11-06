@@ -1,0 +1,46 @@
+---
+import { getCollection } from "astro:content";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { siteConfig } from "@/config/site";
+import { getAllAuthors, visiblePosts } from "@/lib/posts";
+
+const allPosts = visiblePosts(await getCollection("posts"));
+const authors = getAllAuthors(allPosts);
+---
+
+<BaseLayout
+  title="Authors"
+  description={`Browse ${siteConfig.name} editors, reporters, and contributors.`}
+>
+  <SiteHeader posts={allPosts} />
+  <main id="content" class="min-h-screen">
+    <section class="section-shell page-header">
+      <p class="page-kicker">Masthead</p>
+      <h1 class="page-title">Contributors</h1>
+      <p class="page-intro">
+        Reporters, editors, and specialists translating research into public knowledge.
+      </p>
+    </section>
+    <section class="section-shell pb-[var(--space-section)]">
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          authors.map((author) => (
+            <a
+              href={`/author/${author.slug}/`}
+              class="block bg-surface p-5 transition-colors hover:bg-muted"
+            >
+              <span class="font-display text-2xl font-semibold">{author.name}</span>
+              <span class="mt-2 block font-mono text-xs text-muted-foreground">{author.role}</span>
+              <span class="mt-5 block text-sm text-muted-foreground">
+                {author.posts.length} published stories
+              </span>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+  </main>
+  <SiteFooter />
+</BaseLayout>

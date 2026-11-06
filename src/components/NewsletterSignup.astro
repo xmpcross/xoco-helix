@@ -1,0 +1,61 @@
+---
+import { siteConfig } from "@/config/site";
+---
+
+{
+  siteConfig.newsletter.enabled && (
+    <section id="newsletter" class="bg-[#102b3d] text-white">
+      <div class="section-shell py-16 text-center sm:py-20">
+        <div class="mx-auto max-w-3xl">
+          <p class="font-mono text-xs text-signal-mint">{siteConfig.newsletter.eyebrow}</p>
+          <h2 class="mt-4 font-display text-[clamp(2rem,4vw,3.15rem)] font-semibold leading-[1.08] text-balance">
+            {siteConfig.newsletter.title}
+          </h2>
+          <p class="mx-auto mt-4 max-w-xl text-pretty leading-7 text-white/72">
+            {siteConfig.newsletter.description}
+          </p>
+        </div>
+        <form
+          action={siteConfig.newsletter.action || "#newsletter"}
+          method={siteConfig.newsletter.method}
+          class="mx-auto mt-8 grid max-w-3xl gap-3"
+          aria-label="Subscribe to The Helix Brief"
+        >
+          <label class="sr-only" for="newsletter-name">
+            Name
+          </label>
+          <label class="sr-only" for="newsletter-email">
+            Email address
+          </label>
+          <div class="grid gap-3 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto]">
+            <input
+              id="newsletter-name"
+              name={siteConfig.newsletter.nameFieldName}
+              type="text"
+              required
+              autocomplete="name"
+              placeholder="Your name"
+              class="min-h-12 min-w-0 border border-white/20 bg-white px-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-signal-mint"
+            />
+            <input
+              id="newsletter-email"
+              name={siteConfig.newsletter.emailFieldName}
+              type="email"
+              required
+              autocomplete="email"
+              placeholder="reader@example.com"
+              class="min-h-12 min-w-0 border border-white/20 bg-white px-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-signal-mint"
+            />
+            <button
+              class="min-h-12 bg-signal-mint px-7 font-display text-sm font-bold text-midnight transition-opacity hover:opacity-85"
+              type="submit"
+            >
+              Subscribe
+            </button>
+          </div>
+          <p class="font-mono text-xs text-white/52">Weekly / editors only / unsubscribe anytime</p>
+        </form>
+      </div>
+    </section>
+  )
+}

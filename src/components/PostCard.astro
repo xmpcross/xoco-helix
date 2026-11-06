@@ -1,0 +1,257 @@
+---
+import OptimizedImage from "@/components/OptimizedImage.astro";
+import { formatDate, postHref, type Post } from "@/lib/posts";
+
+interface Props {
+  post: Post;
+  variant?:
+    | "lead"
+    | "secondary"
+    | "brief"
+    | "horizontal"
+    | "compact"
+    | "ranked"
+    | "medium"
+    | "data"
+    | "field"
+    | "explainer";
+  rank?: number;
+  eager?: boolean;
+  headingLevel?: "h2" | "h3" | "h4";
+}
+
+const { post, variant = "secondary", rank, eager = false, headingLevel = "h3" } = Astro.props;
+const data = post.data;
+const href = postHref(post);
+const Heading = headingLevel;
+const loading = eager ? "eager" : "lazy";
+const meta = `${formatDate(data.date)} / ${data.readingTime} min`;
+---
+
+{
+  variant === "lead" && (
+    <article class="relative isolate min-h-[34rem] overflow-hidden bg-midnight text-white sm:min-h-[32rem] lg:min-h-0 lg:aspect-[2.25/1]">
+      <OptimizedImage
+        image={data.image}
+        profile="hero"
+        class="absolute inset-0 h-full w-full object-cover"
+        priority={eager}
+      />
+      <div class="absolute inset-0 bg-midnight/18" aria-hidden="true" />
+      <div
+        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(7,21,34,0.82)_0%,rgba(7,21,34,0.42)_38%,rgba(7,21,34,0.04)_74%,rgba(7,21,34,0)_100%)]"
+        aria-hidden="true"
+      />
+      <div class="absolute inset-x-0 bottom-0 z-10">
+        <div class="section-shell pb-8 sm:pb-10 lg:pb-12">
+          <div class="max-w-[58rem]">
+            <p class="font-mono text-xs leading-relaxed text-white">
+              <span class="text-signal-mint">{data.category}</span>
+              <span class="text-white/60" aria-hidden="true">
+                {" "}
+                /{" "}
+              </span>
+              <span>{data.articleType}</span>
+            </p>
+            <h2 class="mt-3 max-w-[54rem] font-display text-[clamp(2rem,3.5vw,3.15rem)] font-semibold leading-[1.04] text-balance">
+              <a href={href} class="transition-colors hover:text-signal-mint">
+                {data.title}
+              </a>
+            </h2>
+            <p class="mt-4 max-w-2xl text-pretty text-[1.02rem] leading-7 text-white/90">
+              {data.description}
+            </p>
+            <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <p class="text-sm text-white/90">
+                <span class="font-semibold text-white">{data.author.name}</span>
+                <span aria-hidden="true"> / </span>
+                <time datetime={data.date.toISOString()}>{formatDate(data.date, "long")}</time>
+              </p>
+              <p class="flex items-center gap-2 font-mono text-xs text-white">
+                <span class="h-1.5 w-1.5 rounded-full bg-signal-mint" aria-hidden="true" />
+                {data.researchStatus}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+{
+  variant === "secondary" && (
+    <article class="group">
+      <a href={href} class="image-frame block aspect-[3/2]">
+        <OptimizedImage image={data.image} profile="card" loading={loading} />
+      </a>
+      <p class="label-line mt-3 text-accent">
+        {data.category} / {data.articleType}
+      </p>
+      <Heading class="mt-1.5 font-display text-[1.4rem] font-semibold leading-[1.15] text-balance">
+        <a href={href} class="headline-accent">
+          {data.title}
+        </a>
+      </Heading>
+      <p class="mt-2 text-pretty text-[0.95rem] leading-6 text-muted-foreground">
+        {data.description}
+      </p>
+      <p class="label-line mt-3">
+        {data.author.name} / {meta}
+      </p>
+    </article>
+  )
+}
+
+{
+  variant === "brief" && (
+    <article class="py-3.5">
+      <p class="label-line mb-1.5 flex items-center gap-2">
+        <time datetime={data.date.toISOString()}>{formatDate(data.date)}</time>
+        <span class="h-1 w-1 rounded-full bg-accent-secondary" aria-hidden="true" />
+        <span>{data.category}</span>
+      </p>
+      <Heading class="font-display text-[1.08rem] font-semibold leading-snug text-balance">
+        <a href={href} class="headline-accent">
+          {data.title}
+        </a>
+      </Heading>
+    </article>
+  )
+}
+
+{
+  variant === "horizontal" && (
+    <article class="group grid gap-5 py-5 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center">
+      <a href={href} class="image-frame aspect-[4/3]">
+        <OptimizedImage image={data.image} profile="compact" loading={loading} />
+      </a>
+      <div>
+        <p class="label-line text-accent">
+          {data.category} / {data.articleType}
+        </p>
+        <Heading class="mt-1.5 font-display text-xl font-semibold leading-snug text-balance">
+          <a href={href} class="headline-accent">
+            {data.title}
+          </a>
+        </Heading>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">{data.description}</p>
+        <p class="label-line mt-2">{meta}</p>
+      </div>
+    </article>
+  )
+}
+
+{
+  variant === "compact" && (
+    <article class="group grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-4 py-3">
+      <a href={href} class="image-frame block aspect-[4/3]">
+        <OptimizedImage image={data.image} profile="compact" loading={loading} />
+      </a>
+      <div>
+        <p class="label-line text-accent">
+          {data.category} / {formatDate(data.date)}
+        </p>
+        <Heading class="mt-1.5 font-display text-[1.02rem] font-semibold leading-[1.18] text-balance">
+          <a href={href} class="headline-accent">
+            {data.title}
+          </a>
+        </Heading>
+      </div>
+    </article>
+  )
+}
+
+{
+  variant === "ranked" && (
+    <article class="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-4 py-4">
+      <p class="font-mono text-xl font-semibold text-accent-secondary">
+        {String(rank ?? 1).padStart(2, "0")}
+      </p>
+      <div>
+        <p class="label-line">
+          {data.category} / {data.articleType}
+        </p>
+        <Heading class="mt-1 font-display text-[1.05rem] font-semibold leading-snug text-balance">
+          <a href={href} class="headline-accent">
+            {data.title}
+          </a>
+        </Heading>
+      </div>
+    </article>
+  )
+}
+
+{
+  variant === "medium" && (
+    <article class="group">
+      <a href={href} class="image-frame block aspect-[3/2]">
+        <OptimizedImage image={data.image} profile="card" loading={loading} />
+      </a>
+      <p class="label-line mt-3 text-accent">
+        {data.category} / {data.articleType}
+      </p>
+      <Heading class="mt-1.5 font-display text-[1.12rem] font-semibold leading-[1.18] text-balance">
+        <a href={href} class="headline-accent">
+          {data.title}
+        </a>
+      </Heading>
+      <p class="label-line mt-2">{data.readingTime} min</p>
+    </article>
+  )
+}
+
+{
+  variant === "data" && (
+    <article class="grid gap-5 bg-primary p-6 text-primary-foreground md:grid-cols-[7rem_minmax(0,1fr)] md:p-8">
+      <div>
+        <p class="font-mono text-4xl font-semibold text-signal-mint">
+          {String(rank ?? 1).padStart(2, "0")}
+        </p>
+        <p class="mt-2 font-mono text-xs text-primary-foreground/70">{data.category}</p>
+      </div>
+      <div>
+        <Heading class="font-display text-[1.55rem] font-semibold leading-tight text-balance">
+          <a href={href} class="hover:text-signal-mint">
+            {data.title}
+          </a>
+        </Heading>
+        <p class="mt-3 text-sm leading-6 text-primary-foreground/78">{data.description}</p>
+      </div>
+    </article>
+  )
+}
+
+{
+  variant === "field" && (
+    <article class="grid gap-5 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-center">
+      <a href={href} class="image-frame block aspect-[4/3]">
+        <OptimizedImage image={data.image} profile="compact" loading={loading} />
+      </a>
+      <div>
+        <p class="label-line text-accent">From the Field / {data.category}</p>
+        <Heading class="mt-1.5 font-display text-[1.35rem] font-semibold leading-tight text-balance">
+          <a href={href} class="headline-accent">
+            {data.title}
+          </a>
+        </Heading>
+        <p class="mt-3 text-sm leading-6 text-muted-foreground">{data.description}</p>
+      </div>
+    </article>
+  )
+}
+
+{
+  variant === "explainer" && (
+    <article class="relative py-4 pl-5">
+      <span class="absolute left-0 top-5 h-8 w-[3px] bg-accent-secondary" aria-hidden="true" />
+      <p class="label-line text-accent">Explained / {data.category}</p>
+      <Heading class="mt-1.5 font-display text-[1.3rem] font-semibold leading-tight text-balance">
+        <a href={href} class="headline-accent">
+          {data.title}
+        </a>
+      </Heading>
+      <p class="mt-2 text-pretty text-sm leading-6 text-muted-foreground">{data.description}</p>
+    </article>
+  )
+}
